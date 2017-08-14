@@ -67,6 +67,31 @@ public class SurveyService {
         return teamNames;
     }
 
+    private static ArrayList<Surveyee> getAllSurveyees(){
+        String[] dbDetails = getDBDetails();
+        ArrayList<Surveyee> surveyees = new ArrayList<Surveyee>();
+        try {
+            Class.forName("com.mysql.jdbc.Driver");
+            Connection conn = DriverManager.getConnection(dbDetails[0], dbDetails[1], dbDetails[2]);
+            Statement stmt = conn.createStatement();
+
+            String queryStatement = "SELECT * from TeamNames";
+
+            ResultSet resultSet = stmt.executeQuery(queryStatement);
+            while(resultSet.next()){
+                Surveyee surveyee = new Surveyee();
+                surveyee.setSurveyeeName(resultSet.getString("bioName"));
+                surveyee.setPortfolio(resultSet.getString("portfolio"));
+                surveyees.add(surveyee);
+            }
+        }
+        catch (Exception exception){
+            logger.error("Error Code: " + exception.toString());
+        }
+
+        return surveyees;
+    }
+
     private static int getNumberOfBioForTeam(String teamName){
         String[] dbDetails = getDBDetails();
         int numberOfBIO = 0;
@@ -351,6 +376,12 @@ public class SurveyService {
             }
         }, json());
 
+
+        get("/surveyees", new Route() {
+            public Object handle(Request request, Response res) throws Exception {
+                return getAllSurveyees();
+            }
+        }, json());
 
 
         options("/*",
