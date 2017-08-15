@@ -82,6 +82,7 @@ public class SurveyService {
                 Surveyee surveyee = new Surveyee();
                 surveyee.setSurveyeeName(resultSet.getString("bioName"));
                 surveyee.setPortfolio(resultSet.getString("portfolio"));
+                surveyee.setTeamName(resultSet.getString("teamName"));
                 surveyees.add(surveyee);
             }
         }
