@@ -189,7 +189,7 @@ public class SurveyService {
             Connection conn = DriverManager.getConnection(dbDetails[0], dbDetails[1], dbDetails[2]);
             Statement stmt = conn.createStatement();
 
-            String queryStatement = String.format("SELECT * from SurveyResults where teamName = '%s' AND bioName = '%s' AND quarter = '%s'", teamName, surveyee, quarter);
+            String queryStatement = String.format("SELECT * from SurveyResults where portfolio = '%s' AND bioName = '%s' AND quarter = '%s'", teamName, surveyee, quarter);
 
             ResultSet resultSet = stmt.executeQuery(queryStatement);
             while(resultSet.next()){
