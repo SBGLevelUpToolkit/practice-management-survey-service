@@ -61,7 +61,7 @@ public class SurveyService {
             }
         }
         catch (Exception exception){
-            logger.error("Error Code: " + exception.toString());
+            logger.error("Error Code - getTeamNames: " + exception.toString());
         }
 
         return teamNames;
@@ -87,7 +87,7 @@ public class SurveyService {
             }
         }
         catch (Exception exception){
-            logger.error("Error Code: " + exception.toString());
+            logger.error("Error Code - getAllSurveyees: " + exception.toString());
         }
 
         return surveyees;
@@ -111,13 +111,40 @@ public class SurveyService {
 
         }
         catch (SQLException exception){
-            logger.error("Error Code: " + exception.toString());
+            logger.error("Error Code - sql - getNumberOfBioForTeam: " + exception.toString());
         }
         catch (Exception exception){
-            logger.error("Error Code: " + exception.toString());
+            logger.error("Error Code - non-sql - getNumberOfBioForTeam: " + exception.toString());
         }
 
         return numberOfBIO;
+    }
+
+    private static String getPortfolioForTeam(String teamName){
+        String[] dbDetails = getDBDetails();
+        String portfolio = "";
+        try {
+            Class.forName("com.mysql.jdbc.Driver");
+            Connection conn = DriverManager.getConnection(dbDetails[0], dbDetails[1], dbDetails[2]);
+            Statement stmt = conn.createStatement();
+
+            String queryStatement = String.format("SELECT portfolio from TeamNames WHERE teamName = '%s'", teamName);
+
+            ResultSet resultSet = stmt.executeQuery(queryStatement);
+
+            while(resultSet.next()){
+                portfolio = resultSet.getString("portfolio");
+            }
+
+        }
+        catch (SQLException exception){
+            logger.error("Error Code - sql - getPortfolioForTeam: " + exception.toString());
+        }
+        catch (Exception exception){
+            logger.error("Error Code - non-sql - getPortfolioForTeam: " + exception.toString());
+        }
+
+        return portfolio;
     }
 
     private static ArrayList<SurveyResult> getSurveyResultsForTeam(String teamName){
@@ -148,7 +175,7 @@ public class SurveyService {
             }
         }
         catch (Exception exception){
-            logger.error("Error Code: " + exception.toString());
+            logger.error("Error Code - getSurveyResultsForTeam: " + exception.toString());
         }
         return surveyResults;
     }
@@ -180,7 +207,7 @@ public class SurveyService {
             }
         }
         catch (Exception exception){
-            logger.error("Error Code: " + exception.toString());
+            logger.error("Error Code - getSurveyResultsForTeamAndSurveyee: " + exception.toString());
         }
         return surveyResult;
     }
@@ -189,14 +216,14 @@ public class SurveyService {
         ArrayList<SurveyResults> surveyResults = new ArrayList<SurveyResults>();
 
         if(teamName != null && !teamName.equals("undefined" )){
-            SurveyResults teamSurveyResults = new SurveyResults(teamName, getNumberOfBioForTeam(teamName), getSurveyResultsForTeam(teamName));
+            SurveyResults teamSurveyResults = new SurveyResults(teamName, getPortfolioForTeam(teamName), getNumberOfBioForTeam(teamName), getSurveyResultsForTeam(teamName));
             surveyResults.add(teamSurveyResults);
         }
         else {
             ArrayList<String> allTeams = getTeamNames();
 
             for (String teamNameRetrieved : allTeams) {
-                SurveyResults teamSurveyResults = new SurveyResults(teamNameRetrieved, getNumberOfBioForTeam(teamNameRetrieved), getSurveyResultsForTeam(teamNameRetrieved));
+                SurveyResults teamSurveyResults = new SurveyResults(teamNameRetrieved, getPortfolioForTeam(teamNameRetrieved), getNumberOfBioForTeam(teamNameRetrieved), getSurveyResultsForTeam(teamNameRetrieved));
                 surveyResults.add(teamSurveyResults);
             }
         }
@@ -205,14 +232,14 @@ public class SurveyService {
     }
 
     private static SurveyResult surveyForSurveyee(String surveyeeName){
-        String teamName = getTeamName(surveyeeName);
+        String teamName = getColumnName(surveyeeName, "teamName");
         String quarter = getQuarter();
 
         return getSurveyResultsForTeamAndSurveyee(teamName, surveyeeName, quarter);
     }
 
-    private static String getTeamName(String BIOName){
-        String teamName = "";
+    private static String getColumnName(String BIOName, String columnName){
+        String columnNameRetrieved = "";
         String[] dbDetails = getDBDetails();
 
         try {
@@ -220,19 +247,19 @@ public class SurveyService {
             Connection conn = DriverManager.getConnection(dbDetails[0], dbDetails[1], dbDetails[2]);
             Statement stmt = conn.createStatement();
 
-            String queryStatement = String.format("SELECT teamName from TeamNames where bioName = '%s'", BIOName);
+            String queryStatement = String.format("SELECT %s from TeamNames where bioName = '%s'", columnName, BIOName);
 
             ResultSet resultSet = stmt.executeQuery(queryStatement);
 
             while(resultSet.next()){
-                teamName = resultSet.getString("teamName");
+                columnNameRetrieved = resultSet.getString(columnName);
             }
         }
         catch (Exception exception){
-            logger.error("Error Code: " + exception.toString());
+            logger.error("Error Code - getColumnName: " + exception.toString());
             return "Error Code: " + exception.toString();
         }
-        return teamName;
+        return columnNameRetrieved;
     }
 
     private static String getQuarter(){
@@ -342,9 +369,10 @@ public class SurveyService {
                     Statement stmt = conn.createStatement();
 
                     String sql = String.format("REPLACE INTO SurveyResults " +
-                                    "VALUES ('%s','%s', '%s',%s,%s,%s,%s,%s,%s,%s,'%s')", BIO, getTeamName(BIO), getQuarter(),
-                            softwareScore, agileCoachingScore, changeAndReleaseScore, qualityEngineeringScore,
-                            enterpriseArchitectureScore, solutionsArchitectureScore, dataServicesScore, rawData);
+                                    "VALUES ('%s','%s', '%s', '%s',%s,%s,%s,%s,%s,%s,%s,'%s')", BIO, getColumnName(BIO, "teamName"),
+                            getColumnName(BIO, "portfolio"), getQuarter(), softwareScore, agileCoachingScore,
+                            changeAndReleaseScore, qualityEngineeringScore, enterpriseArchitectureScore,
+                            solutionsArchitectureScore, dataServicesScore, rawData);
 
                     int insertedRecord = stmt.executeUpdate(sql);
 
@@ -355,7 +383,7 @@ public class SurveyService {
                     }
                 }
                 catch (SQLException exception){
-                    logger.error("Error Code: " + exception.toString());
+                    logger.error("Error Code - sql - saveSurvey: " + exception.toString());
                     return "Error Code: " + exception.toString();
                 }
 
