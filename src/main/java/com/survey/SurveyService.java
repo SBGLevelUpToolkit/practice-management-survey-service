@@ -231,10 +231,8 @@ public class SurveyService {
         return surveyResults;
     }
 
-    private static SurveyResult surveyForSurveyee(String surveyeeName){
-        String teamName = getColumnName(surveyeeName, "teamName");
+    private static SurveyResult surveyForSurveyee(String surveyeeName, String teamName){
         String quarter = getQuarter();
-
         return getSurveyResultsForTeamAndSurveyee(teamName, surveyeeName, quarter);
     }
 
@@ -401,7 +399,8 @@ public class SurveyService {
         get("/surveyTaken", new Route() {
             public Object handle(Request request, Response res) throws Exception {
                 String surveyeeName = request.queryParams("surveyee");
-                return surveyForSurveyee(surveyeeName);
+                String teamName = request.queryParams("teamName");
+                return surveyForSurveyee(surveyeeName, teamName);
             }
         }, json());
 
