@@ -260,6 +260,35 @@ public class SurveyService {
         return columnNameRetrieved;
     }
 
+    private static String updateUserDetails(String surveyeeName, String teamName, String portfolioName){
+        String[] dbDetails = getDBDetails();
+
+        try {
+            Class.forName("com.mysql.jdbc.Driver");
+            Connection conn = DriverManager.getConnection(dbDetails[0], dbDetails[1], dbDetails[2]);
+            Statement stmt = conn.createStatement();
+
+            String sql = String.format("REPLACE INTO TeamNames " +
+                            "VALUES ('%s','%s', '%s')", surveyeeName, teamName, portfolioName);
+
+            int insertedRecord = stmt.executeUpdate(sql);
+
+            if (insertedRecord > 0) {
+                return "Successfully inserted record";
+            } else {
+                return "Record not inserted";
+            }
+        }
+        catch (SQLException exception){
+            logger.error("Error Code - sql - updateUserDetails: " + exception.toString());
+            return "Error Code: " + exception.toString();
+        }
+        catch (Exception exception){
+            logger.error("Error Code - non-sql - updateUserDetails: " + exception.toString());
+            return "Error Code: " + exception.toString();
+        }
+    }
+
     private static String getQuarter(){
         Date currentDate = new Date();
         Calendar calendar = Calendar.getInstance();
@@ -403,6 +432,16 @@ public class SurveyService {
                 return surveyForSurveyee(surveyeeName, teamName);
             }
         }, json());
+
+
+        post("/update", new Route() {
+            public Object handle(Request request, Response res) throws Exception {
+                String surveyeeName = request.queryParams("surveyee");
+                String teamName = request.queryParams("teamName");
+                String portfolioName = request.queryParams("portfolio");
+                return updateUserDetails(surveyeeName, teamName, portfolioName);
+            }
+        });
 
 
         get("/surveyees", new Route() {
